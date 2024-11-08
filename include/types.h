@@ -10,6 +10,11 @@
 #include <type_traits>
 
 namespace miso {
+
+/*~-------------------------------------------------------------------------~*\
+ * Type Declarations                                                         *
+\*~-------------------------------------------------------------------------~*/
+
 	// Represents a nonexistent/null type
 	// For example: The result of geting first argument of pack<> (empty)
 	struct no_type {
@@ -19,6 +24,10 @@ namespace miso {
 	// Forward declare pack
 	template<typename... Ts>
 	struct pack;
+
+/*~-------------------------------------------------------------------------~*\
+ * Variadic Type Access                                                      *
+\*~-------------------------------------------------------------------------~*/
 
 	// Primary template
 	// Also handles 0 Ts case
@@ -30,10 +39,14 @@ namespace miso {
 
 	// Isolates first type argument for getting or removing
 	template<typename First, typename... Rest>
-	struct first_arg<First, Rest...> {       
+	struct first_arg<First, Rest...> {
 		using get = First;
 		using remove = pack<Rest...>;
 	};
+
+/*~-------------------------------------------------------------------------~*\
+ * Variadic Type Removal                                                     *
+\*~-------------------------------------------------------------------------~*/
 
 	namespace detail {
 		// Primary template
@@ -49,24 +62,28 @@ namespace miso {
 		template<typename... NPAs, typename... OPAs, typename... Rest>
 		struct remove_ts_aux<pack<NPAs...>, pack<OPAs...>, Rest...> {
 			using first_og = typename first_arg<OPAs...>::get;
-			using rest_og  = typename first_arg<OPAs...>::remove;
+			using rest_og = typename first_arg<OPAs...>::remove;
 			// If the type in the original pack is the same as any remove type,
 			// don't add it to the pack, otherwise add it. Then recurse
-			using type     = std::conditional_t<
+			using type = std::conditional_t<
 				(std::_Is_any_of_v<first_og, Rest...>),
-				typename remove_ts_aux<pack<NPAs...			 >, 
-									   rest_og, Rest...>::type,
-				typename remove_ts_aux<pack<NPAs..., first_og>, 
-									   rest_og, Rest...>::type
+				typename remove_ts_aux<pack<NPAs...			 >,
+				rest_og, Rest...>::type,
+				typename remove_ts_aux<pack<NPAs..., first_og>,
+				rest_og, Rest...>::type
 			>;
 		};
 
 	} // namespace detail
-	
+
 	// Helper to remove all types RemoveTs from a pack
 	template<class Pack, typename... RemoveTs>
 	using remove_types_t = detail::remove_ts_aux<
 		pack<>, Pack, RemoveTs...>::type;
+
+/*~-------------------------------------------------------------------------~*\
+ * Variadic Type Storage                                                     *
+\*~-------------------------------------------------------------------------~*/
 
 	// Type that can be used like a container of type objects.
 	// pack is used all over this file as a "return type" of multiple types
@@ -83,6 +100,10 @@ namespace miso {
 		template<typename... RemoveTs>
 		using remove = remove_types_t<pack<Ts...>, RemoveTs...>;
 	};
+
+/*~-------------------------------------------------------------------------~*\
+ * Variadic Type Normalization                                               *
+\*~-------------------------------------------------------------------------~*/
 
 	namespace detail {
 		// Primary template
@@ -128,5 +149,9 @@ namespace miso {
 	// types or tuples (nested to any depth) into another tuple
 	template<typename... Args>
 	using flatten_into_tuple_t = typename flatten_t<Args...>::as_tuple;
+
+/*~-------------------------------------------------------------------------~*\
+ *                                                                           *
+\*~-------------------------------------------------------------------------~*/
 
 } // namespace miso
