@@ -33,7 +33,7 @@ namespace miso {
 	// Also handles 0 Ts case
 	template<typename... Ts>
 	struct first_arg {
-		using get = void; // Doesn't exist
+		using get = no_type; // Doesn't exist
 		using remove = pack<>;
 	};
 
@@ -93,9 +93,13 @@ namespace miso {
 		using as_tuple = std::tuple<Ts...>;
 
 		template<typename... NewTs>
-		using add = pack<Ts..., NewTs...>;
+		using push_front = pack<NewTs..., Ts...>;
 
-		using first = first_arg<Ts...>;
+		template<typename... NewTs>
+		using push_back = pack<Ts..., NewTs...>;
+
+
+		using front = first_arg<Ts...>;
 
 		template<typename... RemoveTs>
 		using remove = remove_types_t<pack<Ts...>, RemoveTs...>;
@@ -117,22 +121,22 @@ namespace miso {
 		// Last arg is non-tuple (guaranteed endpoint)
 		template<class Pack, typename First>
 		struct flatten<Pack, First> {
-			using type = typename Pack::template add<First>;
+			using type = typename Pack::template push_back<First>;
 		};
 		// Last arg is tuple (requires reflatten)
 		template<class Pack, typename... FirstArgs>
 		struct flatten<Pack, std::tuple<FirstArgs...>> {
-			using type = typename reflatten<typename Pack::template add<FirstArgs...>>::type;
+			using type = typename reflatten<typename Pack::template push_back<FirstArgs...>>::type;
 		};
 		// Arg is non-tuple
 		template<class Pack, typename First, typename... Rest>
 		struct flatten {
-			using type = typename flatten<typename Pack::template add<First>, Rest...>::type;
+			using type = typename flatten<typename Pack::template push_back<First>, Rest...>::type;
 		};
 		// Arg is tuple (requires reflatten)
 		template<class Pack, typename... FirstArgs, typename... Rest>
 		struct flatten<Pack, std::tuple<FirstArgs...>, Rest...> {
-			using type = typename reflatten<typename Pack::template add<FirstArgs...>, Rest...>::type;
+			using type = typename reflatten<typename Pack::template push_back<FirstArgs...>, Rest...>::type;
 		};
 		// Reflatten all args to get all nested tuples at any depth
 		template<typename... PackArgs, typename... Rest>
@@ -153,5 +157,7 @@ namespace miso {
 /*~-------------------------------------------------------------------------~*\
  *                                                                           *
 \*~-------------------------------------------------------------------------~*/
+
+
 
 } // namespace miso
